@@ -1,0 +1,38 @@
+cd "D:\Stata17\ado\PLUS"
+drop if cesd8 == .|cesd8==-8
+drop if age<60
+drop if qa301==-1|qa301==79  //筛选户口
+tabulate qa301  //查看qa301的唯一值
+//将qa301中所有值为"非农业户口"的记录替换为"居民户口"
+replace qa301 = 7 if qa301 == 3 
+
+
+gen renyuan = qm2011 if qm2011>=0 & qm2011<11
+drop if renyuan ==.
+//社会信任=对政府的信任+对医生的信任
+gen soc_trust = qn10025 + qn10026 if(qn10025>=0&qn10025<=10)&(qn10026>=0&qn10026<=10)
+drop if soc_trust ==.
+
+gen sta_life = qn12012 if qn12012>=0&qn12012<=5
+drop if sta_life ==.
+
+
+reg renyuan soc_trust gender age
+reg sta_life renyuan soc_trust gender age
+reg cesd8 renyuan sta_life soc_trust gender age
+
+// pwcorr  age gender soc_trust renyuan sta_life cesd8, sig
+
+pwcorr_a age gender soc_trust renyuan sta_life cesd8 , star1(0.01) star5(0.05) star10(0.1)
+
+//对性别做t检验
+ttest soc_trust,by (gender)
+ttest renyuan,by (gender)
+ttest sta_life,by (gender)
+ttest cesd8,by (gender)
+
+//对户口做做t检验
+ttest soc_trust,by (qa301)
+ttest renyuan,by (qa301)
+ttest sta_life,by (qa301)
+ttest cesd8,by (qa301)
